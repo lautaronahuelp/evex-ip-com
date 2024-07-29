@@ -19,10 +19,7 @@ class extractorEventos : public dscKeybusInterface {
     bool exPanelStatus3(byte panelByte, EventoStruct * evento);
     bool exPanelStatus4(byte panelByte, EventoStruct * evento);
     bool exPanelStatus5(byte panelByte, EventoStruct * evento);
-    bool exPanelStatus14(byte panelByte, EventoStruct * evento);
     bool exPanelStatus16(byte panelByte, EventoStruct * evento);
-    bool exPanelStatus17(byte panelByte, EventoStruct * evento);
-    bool exPanelStatus18(byte panelByte, EventoStruct * evento);
     bool exPanelStatus1B(byte panelByte, EventoStruct * evento);
     void exNumberSpace(byte number);
     int exPanelBitNumbers(byte panelByte, byte startNumber, byte startBit = 0, byte stopBit = 7, bool printNone = true);
@@ -30,10 +27,6 @@ class extractorEventos : public dscKeybusInterface {
     int exPanelAccessCode(byte dscCode, bool accessCodeIncrease = true);
     void exPartition();
     void exPanelTime(byte panelByte);
-
-    //bool validCRC();
-    //void writeKeys(const char * writeKeysArray);
-    //void setWriteKey(const char receivedKey);
 };
 
 #endif
