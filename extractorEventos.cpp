@@ -897,3 +897,113 @@ int extractorEventos::exPanelBitNumbers(byte panelByte, byte startNumber, byte s
   }
   return numBit;
 }
+
+// Specifies the key value to be written by dscClockInterrupt() and selects the write partition.  This includes a 500ms
+// delay after alarm keys to resolve errors when additional keys are sent immediately after alarm keys.
+void extractorEventos::setWriteKey(const char receivedKey) {
+  static unsigned long previousTime;
+  static bool setPartition;
+
+  // Sets the write partition if set by virtual keypad key '/'
+  if (setPartition) {
+    setPartition = false;
+    if (receivedKey >= '1' && receivedKey <= '8') {
+      writePartition = receivedKey - 48;
+    }
+    return;
+  }
+
+  // Sets the binary to write for virtual keypad keys
+  if (!writeKeyPending && (millis() - previousTime > 500 || millis() <= 500)) {
+    bool validKey = true;
+
+    // Skips writing to disabled partitions or partitions not specified in dscKeybusInterface.h
+    if (disabled[writePartition - 1] || dscPartitions < writePartition) {
+      switch (receivedKey) {
+        case '/': setPartition = true; validKey = false; break;
+      }
+      return;
+    }
+
+    // Sets binary for virtual keypad keys
+    else {
+      switch (receivedKey) {
+        case '/': setPartition = true; validKey = false; break;
+        case '0': writeKey = 0x00; break;
+        case '1': writeKey = 0x05; break;
+        case '2': writeKey = 0x0A; break;
+        case '3': writeKey = 0x0F; break;
+        case '4': writeKey = 0x11; break;
+        case '5': writeKey = 0x16; break;
+        case '6': writeKey = 0x1B; break;
+        case '7': writeKey = 0x1C; break;
+        case '8': writeKey = 0x22; break;
+        case '9': writeKey = 0x27; break;
+        case '*': writeKey = 0x28; if (status[writePartition - 1] < 0x9E) starKeyCheck = true; break;
+        case '#': writeKey = 0x2D; break;
+        case '%': writeKey = 0x46; break;                                                         //HEX 46 wireless key disarm PREBA CE2
+        case '&': writeKey = 0x33; break;                                                        //HEX 33 INGRESAR & PARA PASAR DE ESCAQUE EN PROG.
+        case 'f': case 'F': writeKey = 0xBB; writeAlarm = true; break;                           // Keypad fire alarm
+        case 'b': case 'B': writeKey = 0x82; break;                                              // Enter event buffer
+        case '>': writeKey = 0x87; break;                                                        // Event buffer right arrow
+        case '<': writeKey = 0x88; break;                                                        // Event buffer left arrow
+        case 'l': case 'L': writeKey = 0xA5; break;                                              // LCD keypad data request
+        case 's': case 'S': writeKey = 0xAF; writeAccessCode[writePartition - 1] = true; break;  // Arm stay
+        case 'w': case 'W': writeKey = 0xB1; writeAccessCode[writePartition - 1] = true; break;  // Arm away
+        case 'n': case 'N': writeKey = 0xB6; writeAccessCode[writePartition - 1] = true; break;  // Arm with no entry delay (night arm)
+        case 'a': case 'A': writeKey = 0xDD; writeAlarm = true; break;                           // Keypad auxiliary alarm
+        case 'c': case 'C': writeKey = 0xBB; break;                                              // Door chime
+        case 'r': case 'R': writeKey = 0xDA; break;                                              // Reset
+        case 'p': case 'P': writeKey = 0xEE; writeAlarm = true; break;                           // Keypad panic alarm
+        case 'x': case 'X': writeKey = 0xE1; break;                                              // Exit
+        case '[': writeKey = 0xD5; writeAccessCode[writePartition - 1] = true; break;            // Command output 1
+        case ']': writeKey = 0xDA; writeAccessCode[writePartition - 1] = true; break;            // Command output 2
+        case '{': writeKey = 0x70; writeAccessCode[writePartition - 1] = true; break;            // Command output 3
+        case '}': writeKey = 0xEC; writeAccessCode[writePartition - 1] = true; break;            // Command output 4
+        default: {
+          validKey = false;
+          break;
+        }
+      }
+    }
+
+    // Sets the writing position in dscClockInterrupt() for the currently set partition
+    switch (writePartition) {
+      case 1:
+      case 5: {
+        writeByte = 2;
+        writeBit = 9;
+        break;
+      }
+      case 2:
+      case 6: {
+        writeByte = 3;
+        writeBit = 17;
+        break;
+      }
+      case 3:
+      case 7: {
+        writeByte = 8;
+        writeBit = 57;
+        break;
+      }
+      case 4:
+      case 8: {
+        writeByte = 9;
+        writeBit = 65;
+        break;
+      }
+      default: {
+        writeByte = 2;
+        writeBit = 9;
+        break;
+      }
+    }
+
+    if (writeAlarm) previousTime = millis();  // Sets a marker to time writes after keypad alarm keys
+    if (validKey) {
+      writeKeyPending = true;                 // Sets a flag indicating that a write is pending, cleared by dscClockInterrupt()
+      writeReady = false;
+    }
+  }
+}

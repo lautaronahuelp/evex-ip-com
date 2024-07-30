@@ -1,7 +1,7 @@
 #ifndef EVENTO_DC09_H
 #define EVENTO_DC09_H
 
-#include "EvexStruct.h"
+#include "evexStruct.h"
 #include <cstdio>
 #include <cstring>
 

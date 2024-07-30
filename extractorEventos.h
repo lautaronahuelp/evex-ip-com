@@ -1,7 +1,7 @@
 #ifndef EVEX_H
 #define EVEX_H
 
-#include "EvexStruct.h"
+#include "evexStruct.h"
 #include "dscKeybus.h"
 
 class extractorEventos : public dscKeybusInterface {
@@ -27,6 +27,8 @@ class extractorEventos : public dscKeybusInterface {
     int exPanelAccessCode(byte dscCode, bool accessCodeIncrease = true);
     void exPartition();
     void exPanelTime(byte panelByte);
+
+    void setWriteKey(const char receivedKey);
 };
 
 #endif
