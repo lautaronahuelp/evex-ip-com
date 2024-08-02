@@ -8,6 +8,7 @@ class extractorEventos : public dscKeybusInterface {
   public:
     extractorEventos(byte setClockPin, byte setReadPin, byte setWritePin = 255) : dscKeybusInterface(setClockPin, setReadPin, setWritePin){};
     int extraerComandoPanel(EventoStruct * evento, ConfigStruct * config);
+    void loop();
 
   protected:
     bool exPanel_0xA5(EventoStruct * evento);

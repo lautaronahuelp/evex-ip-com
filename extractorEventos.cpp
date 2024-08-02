@@ -1,5 +1,12 @@
 #include "extractorEventos.h"
 
+void extractorEventos::loop()
+{
+  if(dscKeybusInterface::loop()){
+    
+  }
+}
+
 int extractorEventos::extraerComandoPanel(EventoStruct* evento, ConfigStruct* configuracion) {
   bool decoded[2] = { false, false };  //{evento, configuracion}
 

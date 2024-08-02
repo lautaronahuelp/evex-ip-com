@@ -3,15 +3,15 @@
 char * eventoDC09::genDC09String(int type, EventoStruct evento, int sequence, char * account){
   static char salida[50];
   char qualifier[] = "13";
-  char salidaSinStamp[42];
+  char salidaSinStamp[44];
   
   switch(type){
     case 0:
-        snprintf(salidaSinStamp, 42, "\"NULL\"%04dR0L0#%s[]", sequence, account);
+        snprintf(salidaSinStamp, 44, "\n\"NULL\"%04dR0L0#%s[]\r", sequence, account);
       break;
     case 1:
         //"ADM-CID"SSSSR0L0#CCCC[#CCCC|QEEE PP ZZZ] <- FORMATO CID
-        snprintf(salidaSinStamp, 42, "\"ADM-CID\"%04dR0L0#%s[#%s|%c%d %02d %03d]", sequence, account, account, qualifier[evento.q], evento.eve, evento.part
+        snprintf(salidaSinStamp, 44, "\n\"ADM-CID\"%04dR0L0#%s[#%s|%c%d %02d %03d]\r", sequence, account, account, qualifier[evento.q], evento.eve, evento.part
           , evento.zona);
       break;
     default:
