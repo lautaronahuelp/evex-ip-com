@@ -7,7 +7,7 @@ char * eventoDC09::genDC09String(int type, EventoStruct evento, int sequence, ch
   
   switch(type){
     case 0:
-        snprintf(salidaSinStamp, 44, "\n\"NULL\"%04dR0L0#%s[]\r", sequence, account);
+        snprintf(salidaSinStamp, 44, "\n\"NULL\"0000R0L0#%s[]\r", account);// NULL TIENE SECUENCIA 0000
       break;
     case 1:
         //"ADM-CID"SSSSR0L0#CCCC[#CCCC|QEEE PP ZZZ] <- FORMATO CID

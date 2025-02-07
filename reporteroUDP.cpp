@@ -17,64 +17,52 @@ void reporteroUDP::agregarEvento(EventoStruct evento) {
 }
 
 void reporteroUDP::iniciar(int puertoLocal) {
-  UDP.begin(puertoLocal);
+  UDP.begin(puertoLocal);  //tema puerto random o de configuracion
   UDP.flush();
 }
 
 void reporteroUDP::loop() {
   static bool aumSecEnFalla = true;
-  int intervalo = 1000, numServ = 0;
+  int intervalo = timeOutReportes;
   EventoStruct peekEvento;
   bool fallaCom = hayFallaCom();
-  if (numIntentos[numServ] == maxIntentos[numServ]) {//rota el numero de servidor antes de la falla, falta que rote en la falla
-    switch (numServ) {
-      case 0:
-        numServ = 1;
-        break;
-      case 1:
-        numServ = 0;
-        break;
+  /*SEGUN DISEÑO*/
+
+  if (fallaCom) intervalo = timeOutEnFalla;
+
+  if (millis() - tiemUltIntento > intervalo) {
+
+    if (fallaCom) intercambioServidores(numServ);  // rota si hay falla
+
+    if (!fallaCom && !hbEnProceso && !(colaMon.isEmpty())) {
+      colaMon.peek(&peekEvento);
+      enviarEvento(1, peekEvento); //debe recibir servidor
+      tiemUltIntento = millis();
+      numIntentos[numServ]++;
+    } else if (millis() - tiemUltAck > hbMon) {
+      hbEnProceso = true;
+      enviarEvento(0, peekEvento);//debe recibir servidor
+      tiemUltIntento = millis();
+      numIntentos[numServ]++;
     }
   }
 
-  if (recibirAck()) {
+  if (!fallaCom && !(numIntentos[numServ] < maxIntentos[numServ])) intercambiaServidores(numServ);  ///rota el numero de servidor si no hay falla
+
+  /**/
+
+
+
+  if (recibirAck()) {//TEMA DETECTAR SECUENCIA
     if (!fallaCom) colaMon.drop();
     tiemUltAck = millis();
     aumSecEnFalla = true;
     numIntentos[0] = 0;  //TEMA ULTIMO SERVIDOR Q RESPONDIO
     numIntentos[1] = 0;
   }
-
-  if (!fallaCom) {
-    if (millis() - tiemUltIntento > intervalo) {
-      if (!(colaMon.isEmpty())) {
-        colaMon.peek(&peekEvento);
-        enviarEvento(1, peekEvento);
-        tiemUltIntento = millis();
-        numIntentos[numServ]++;
-      } else if (millis() - tiemUltAck > hbMon) {
-        enviarEvento(0, peekEvento);
-        tiemUltIntento = millis();
-        numIntentos[numServ]++;
-      }
-    }
-  }
-
-  if (fallaCom) {
-    if (aumSecEnFalla) {
-      aumentarSecuencia();
-      aumSecEnFalla = false;
-    }
-    if (millis() - tiemUltIntento > intervaloEnFalla) {
-      enviarEvento(0, peekEvento);
-      tiemUltIntento = millis();
-    }
-  }
-
-
 }
 
-void reporteroUDP::enviarEvento(int tipo, EventoStruct evento) {
+void reporteroUDP::enviarEvento(int tipo, EventoStruct evento) {//debe recibir servidor
   int iniPaquete = 0, finPaquete = 0;
   //falta implementar rotacion de servidores
   iniPaquete = UDP.beginPacket(servMon[0], puerMon[0]);
@@ -138,6 +126,17 @@ bool reporteroUDP::reiniciarCom() {
 
 int reporteroUDP::aumentarSecuencia() {
   secuenMon++;
-  if (secuenMon > 9999) secuenMon = 0;
+  if (secuenMon > 9999) secuenMon = 1;
   return secuenMon;
+}
+
+void reporteroUDP::intercambioServidores(numServ) {
+  switch (numServ) {
+    case 0:
+      numServ = 1;
+      break;
+    case 1:
+      numServ = 0;
+      break;
+  }
 }
