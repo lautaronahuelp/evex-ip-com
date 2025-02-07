@@ -34,6 +34,8 @@ class reporteroUDP {
 
     int aumentarSecuencia();
     bool secuenciaEsCorrecta(int secuencia);
+    bool intentosExedidos();
+    void intercambioServidores();
     
 };
 

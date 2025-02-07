@@ -22,32 +22,30 @@ void reporteroUDP::iniciar(int puertoLocal) {
 }
 
 void reporteroUDP::loop() {
-  static bool aumSecEnFalla = true;
   int intervalo = timeOutReportes;
   EventoStruct peekEvento;
   bool fallaCom = hayFallaCom();
+  bool intentosExedidos = intentosExedidos();
   /*SEGUN DISEÑO*/
 
-  if (fallaCom) intervalo = timeOutEnFalla;
+  if (intentosExedidos) intervalo = timeOutEnFalla;
 
   if (millis() - tiemUltIntento > intervalo) {
 
-    if (fallaCom) intercambioServidores(numServ);  // rota si hay falla
+    if (fallaCom || !(numIntentos[numServ] < maxIntentos[numServ])) intercambioServidores(numServ);  // rota si hay falla o si se exeden los intentos para este servidor
 
     if (!fallaCom && !hbEnProceso && !(colaMon.isEmpty())) {
       colaMon.peek(&peekEvento);
-      enviarEvento(1, peekEvento); //debe recibir servidor
+      enviarEvento(1, peekEvento);
       tiemUltIntento = millis();
       numIntentos[numServ]++;
     } else if (millis() - tiemUltAck > hbMon) {
       hbEnProceso = true;
-      enviarEvento(0, peekEvento);//debe recibir servidor
+      enviarEvento(0, peekEvento);
       tiemUltIntento = millis();
       numIntentos[numServ]++;
     }
   }
-
-  if (!fallaCom && !(numIntentos[numServ] < maxIntentos[numServ])) intercambiaServidores(numServ);  ///rota el numero de servidor si no hay falla
 
   /**/
 
@@ -56,16 +54,15 @@ void reporteroUDP::loop() {
   if (recibirAck()) {//TEMA DETECTAR SECUENCIA
     if (!fallaCom) colaMon.drop();
     tiemUltAck = millis();
-    aumSecEnFalla = true;
-    numIntentos[0] = 0;  //TEMA ULTIMO SERVIDOR Q RESPONDIO
+   
+    numIntentos[0] = 0;  //TEMA ULTIMO SERVIDOR Q RESPONDIO detectar del paquete con ip:puerto y asignarlo en numServ reiniciando sus intentos
     numIntentos[1] = 0;
   }
 }
 
-void reporteroUDP::enviarEvento(int tipo, EventoStruct evento) {//debe recibir servidor
+void reporteroUDP::enviarEvento(int tipo, EventoStruct evento) {
   int iniPaquete = 0, finPaquete = 0;
-  //falta implementar rotacion de servidores
-  iniPaquete = UDP.beginPacket(servMon[0], puerMon[0]);
+  iniPaquete = UDP.beginPacket(servMon[numServ], puerMon[numServ]]);
   UDP.write(EventoDC09.genDC09String(tipo, evento, secuenMon, cuentaMon));
   finPaquete = UDP.endPacket();
 }
@@ -111,7 +108,12 @@ bool reporteroUDP::recibirAck() {
 }
 
 bool reporteroUDP::hayFallaCom() {
-  return (numIntentos[0] == maxIntentos[0]) && (numIntentos[1] == maxIntentos[1]);
+  //RESOLVER DETECCION DE FALLA
+  return intentosExedidos() && (millis() - tiemUltIntento > timeOutEnFalla);
+}
+
+bool reporteroUDP::intentosExedidos(){
+  return !(numIntentos[0] < maxIntentos[0]) && !(numIntentos[1] < maxIntentos[1])
 }
 
 bool reporteroUDP::reiniciarCom() {
@@ -130,7 +132,7 @@ int reporteroUDP::aumentarSecuencia() {
   return secuenMon;
 }
 
-void reporteroUDP::intercambioServidores(numServ) {
+void reporteroUDP::intercambioServidores() {
   switch (numServ) {
     case 0:
       numServ = 1;
