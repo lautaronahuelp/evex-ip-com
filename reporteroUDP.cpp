@@ -25,14 +25,14 @@ void reporteroUDP::loop() {
   int intervalo = timeOutReportes;
   EventoStruct peekEvento;
   bool fallaCom = hayFallaCom();
-  bool intentosExedidos = intentosExedidos();
+  bool intExc = intentosExcedidos();
   /*SEGUN DISEÑO*/
 
-  if (intentosExedidos) intervalo = timeOutEnFalla;
+  if (intExc) intervalo = timeOutEnFalla;
 
   if (millis() - tiemUltIntento > intervalo) {
 
-    if (fallaCom || !(numIntentos[numServ] < maxIntentos[numServ])) intercambioServidores(numServ);  // rota si hay falla o si se exeden los intentos para este servidor
+    if (fallaCom || !(numIntentos[numServ] < maxIntentos[numServ])) intercambioServidores();  // rota si hay falla o si se exeden los intentos para este servidor
 
     if (!fallaCom && !hbEnProceso && !(colaMon.isEmpty())) {
       colaMon.peek(&peekEvento);
@@ -62,7 +62,7 @@ void reporteroUDP::loop() {
 
 void reporteroUDP::enviarEvento(int tipo, EventoStruct evento) {
   int iniPaquete = 0, finPaquete = 0;
-  iniPaquete = UDP.beginPacket(servMon[numServ], puerMon[numServ]]);
+  iniPaquete = UDP.beginPacket(servMon[numServ], puerMon[numServ]);
   UDP.write(EventoDC09.genDC09String(tipo, evento, secuenMon, cuentaMon));
   finPaquete = UDP.endPacket();
 }
@@ -109,11 +109,11 @@ bool reporteroUDP::recibirAck() {
 
 bool reporteroUDP::hayFallaCom() {
   //RESOLVER DETECCION DE FALLA
-  return intentosExedidos() && (millis() - tiemUltIntento > timeOutEnFalla);
+  return intentosExcedidos() && (millis() - tiemUltIntento > timeOutEnFalla);
 }
 
-bool reporteroUDP::intentosExedidos(){
-  return !(numIntentos[0] < maxIntentos[0]) && !(numIntentos[1] < maxIntentos[1])
+bool reporteroUDP::intentosExcedidos(){
+  return !(numIntentos[0] < maxIntentos[0]) && !(numIntentos[1] < maxIntentos[1]);
 }
 
 bool reporteroUDP::reiniciarCom() {

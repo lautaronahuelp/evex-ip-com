@@ -18,10 +18,10 @@ class reporteroUDP {
 
   protected:
     int largoCola = 20, puerMon[2], secuenMon, hbMon, numIntentos[2] = { 0, 0 }, maxIntentos[2] = { 4, 4 };
-    int timeOutReportes = 1000,
+    int timeOutReportes = 1000;
     int timeOutEnFalla = 60000; //hb cada 1 minuto y medio para testear red
     int numServ = 0;
-    bool hbEnProceso = true; //se esta intentando reportar un HB
+    bool hbEnProceso = true, comHabilitada =  true; //se esta intentando reportar un HB
     unsigned long tiemUltAck = 0, tiemUltIntento = 0;
     char servMon[2][51], cuentaMon[5];
 
@@ -34,7 +34,7 @@ class reporteroUDP {
 
     int aumentarSecuencia();
     bool secuenciaEsCorrecta(int secuencia);
-    bool intentosExedidos();
+    bool intentosExcedidos();
     void intercambioServidores();
     
 };

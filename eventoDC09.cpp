@@ -27,9 +27,23 @@ bool eventoDC09::checkDC09CRC(char * message) {
   char entrada[21], salida[50], token[9];
   strcpy(salida, message);
   strcpy(entrada, strtok(&salida[8], "\r"));
-  strcpy(token, strtok(salida, "\""));
+  //strcpy(token, strtok(salida, "\""));
+  strncpy(token, &salida[1], 8);
 
   if (strcmp(token, genCRCStamp(entrada)) == 0) {
+    return true;
+  }
+  return false;
+}
+
+bool eventoDC09::parseDC09(char * mensaje, int * secuencia, char * token) {
+  char salida[50], secString[5];
+  strcpy(salida, mensaje);
+  if(checkDC09CRC(salida)){
+    strtok(salida, "\"");
+    strcpy(token, strtok(salida, "\""));
+    strcpy(secString, strtok(salida, "R"));
+    *secuencia = atoi(secString);
     return true;
   }
   return false;
